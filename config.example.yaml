@@ -1,0 +1,55 @@
+# macOS Supply-Chain Monitor Configuration
+
+# Package managers to monitor
+package_managers:
+  - homebrew
+  - npm
+  - pip
+  - cargo
+  - go
+
+# Paths to watch for changes
+watch_paths:
+  - /usr/local/bin
+  - /opt/homebrew/bin
+  - ~/.cargo/bin
+  - ~/go/bin
+
+# Alert configuration
+alerts:
+  # Minimum risk score to trigger alerts (0-100)
+  risk_threshold: 70
+
+  # Webhook endpoints for alerts
+  webhooks:
+    # - url: https://hooks.slack.com/services/YOUR/WEBHOOK
+    # - url: https://discord.com/api/webhooks/YOUR/WEBHOOK
+
+  # Email alerts (future)
+  # email:
+  #   enabled: false
+  #   to: security@example.com
+
+# Database configuration
+database: ~/.config/scm/scm.db
+
+# Logging configuration
+log_level: info  # debug, info, warning, error
+log_file: ~/.config/scm/scm.log
+
+# Risk scoring weights (advanced)
+risk_scoring:
+  unsigned_binary: 40
+  launch_agent_creation: 50
+  network_connection: 30
+  large_binary: 20  # > 50MB
+  obfuscated_script: 60
+
+# Persistence monitoring
+persistence:
+  enabled: true
+  watch_locations:
+    - ~/Library/LaunchAgents
+    - /Library/LaunchAgents
+    - /Library/LaunchDaemons
+    - ~/Library/Application Support/*/
