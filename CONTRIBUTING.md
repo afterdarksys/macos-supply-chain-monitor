@@ -125,11 +125,11 @@ Please follow these steps:
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/supply-chain-monitor.git
-cd supply-chain-monitor
+git clone https://github.com/YOUR_USERNAME/macos-supply-chain-monitor.git
+cd macos-supply-chain-monitor
 
 # Add upstream remote
-git remote add upstream https://github.com/afterdark/supply-chain-monitor.git
+git remote add upstream https://github.com/straticus1/macos-supply-chain-monitor.git
 
 # Install dependencies
 make deps

@@ -241,8 +241,8 @@ brew tap afterdark/security
 brew install supply-chain-monitor
 
 # Or build from source
-git clone https://github.com/afterdark/supply-chain-monitor
-cd supply-chain-monitor
+git clone https://github.com/straticus1/macos-supply-chain-monitor
+cd macos-supply-chain-monitor
 make install
 ```
 

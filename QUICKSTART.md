@@ -6,8 +6,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/afterdark/supply-chain-monitor
-cd supply-chain-monitor
+git clone https://github.com/straticus1/macos-supply-chain-monitor
+cd macos-supply-chain-monitor
 
 # Download dependencies
 make deps
@@ -22,7 +22,7 @@ make install
 ### Option 2: Download pre-built binary (future)
 
 ```bash
-curl -L https://github.com/afterdark/supply-chain-monitor/releases/latest/download/scm-darwin-amd64 -o scm
+curl -L https://github.com/straticus1/macos-supply-chain-monitor/releases/latest/download/scm-darwin-amd64 -o scm
 chmod +x scm
 sudo mv scm /usr/local/bin/
 ```
