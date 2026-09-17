@@ -62,7 +62,7 @@ func parseDuration(s string) time.Duration {
 func printHistoryTable(events []db.Event) {
 	fmt.Println("\n┌─────────────────────────────────────────────────────────────────┐")
 	fmt.Println("│ Supply-Chain Activity                                            │")
-	fmt.Println("└─────────────────────────────────────────────────────────────────┘\n")
+	fmt.Print("└─────────────────────────────────────────────────────────────────┘\n\n")
 
 	var highCount, mediumCount, lowCount int
 

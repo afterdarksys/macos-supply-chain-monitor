@@ -61,9 +61,11 @@ var daemonStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Check daemon status",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: Implement status check via PID file or socket
-		fmt.Println("⚠️  Status check not yet implemented")
-		fmt.Println("💡 Check if daemon is running: ps aux | grep scm")
+		status, err := daemon.ReadStatus(viper.GetString("database"))
+		if err != nil {
+			return fmt.Errorf("daemon unavailable: %w", err)
+		}
+		fmt.Printf("Daemon PID %d, %d watchers, heartbeat %s\n", status.PID, status.Watchers, status.Updated.Format("2006-01-02T15:04:05Z07:00"))
 		return nil
 	},
 }

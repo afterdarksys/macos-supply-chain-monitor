@@ -14,10 +14,11 @@ import (
 )
 
 type Daemon struct {
-	store    *db.Store
-	watchers []*watcher.Watcher
-	stopChan chan struct{}
-	wg       sync.WaitGroup
+	store      *db.Store
+	statusPath string
+	watchers   []*watcher.Watcher
+	stopChan   chan struct{}
+	wg         sync.WaitGroup
 }
 
 func New(dbPath string) (*Daemon, error) {
@@ -33,8 +34,9 @@ func New(dbPath string) (*Daemon, error) {
 	}
 
 	return &Daemon{
-		store:    store,
-		stopChan: make(chan struct{}),
+		store:      store,
+		statusPath: dbPath + ".status.json",
+		stopChan:   make(chan struct{}),
 	}, nil
 }
 
@@ -43,8 +45,8 @@ func (d *Daemon) Start() error {
 
 	// Initialize watchers for different paths
 	watchPaths := []string{
-		"/usr/local/Cellar",           // Homebrew Intel
-		"/opt/homebrew/Cellar",        // Homebrew Apple Silicon
+		"/usr/local/Cellar",    // Homebrew Intel
+		"/opt/homebrew/Cellar", // Homebrew Apple Silicon
 		"/usr/local/bin",
 		"/opt/homebrew/bin",
 	}
@@ -65,6 +67,8 @@ func (d *Daemon) Start() error {
 		return fmt.Errorf("no valid paths to watch")
 	}
 
+	d.wg.Add(1)
+	go d.heartbeat()
 	log.Printf("Watching %d paths", len(d.watchers))
 	return nil
 }
@@ -118,7 +122,7 @@ func (d *Daemon) handleFileSystemEvent(event fsnotify.Event) {
 	}
 
 	// Extract package name from path
-	pkgName := d.extractPackageName(event.Name, pkgManager)
+	pkgName, pkgVersion := packageIdentity(event.Name, pkgManager)
 
 	// Calculate risk score
 	riskScore := d.calculateRiskScore(event.Name, pkgManager)
@@ -128,7 +132,7 @@ func (d *Daemon) handleFileSystemEvent(event fsnotify.Event) {
 		EventType:      "install",
 		PackageManager: pkgManager,
 		PackageName:    pkgName,
-		PackageVersion: "unknown", // TODO: Extract version
+		PackageVersion: pkgVersion,
 		RiskScore:      riskScore,
 		Details: map[string]interface{}{
 			"path":      event.Name,
@@ -163,47 +167,13 @@ func (d *Daemon) detectPackageManager(path string) string {
 	}
 }
 
-func (d *Daemon) extractPackageName(path, pkgManager string) string {
-	switch pkgManager {
-	case "homebrew":
-		// /usr/local/Cellar/package-name/version/...
-		// Extract package-name
-		parts := filepath.SplitList(path)
-		for i, part := range parts {
-			if part == "Cellar" && i+1 < len(parts) {
-				return parts[i+1]
-			}
-		}
-		// Fallback
-		return filepath.Base(filepath.Dir(filepath.Dir(path)))
-	case "npm":
-		return filepath.Base(filepath.Dir(path))
-	default:
-		return filepath.Base(path)
-	}
+func (d *Daemon) extractPackageName(path, manager string) string {
+	name, _ := packageIdentity(path, manager)
+	return name
 }
 
-func (d *Daemon) calculateRiskScore(path, pkgManager string) int {
-	score := 0
-
-	// Check if file is executable
-	info, err := os.Stat(path)
-	if err == nil && info.Mode()&0111 != 0 {
-		score += 10
-	}
-
-	// Check file size (very large binaries are suspicious)
-	if err == nil && info.Size() > 50*1024*1024 { // > 50MB
-		score += 20
-	}
-
-	// TODO: Check code signature
-	// TODO: Check if creates LaunchAgent
-	// TODO: Check if makes network connections
-	// TODO: Entropy analysis
-
-	return score
-}
+// Risk scores cover static file evidence. Network behavior requires runtime attribution.
+func (d *Daemon) calculateRiskScore(path, manager string) int { return fileRisk(path) }
 
 func (d *Daemon) Stop() error {
 	log.Println("Daemon stopping...")
@@ -229,6 +199,7 @@ func (d *Daemon) Stop() error {
 		log.Println("Timeout waiting for watchers to stop")
 	}
 
+	_ = os.Remove(d.statusPath)
 	// Close database
 	if err := d.store.Close(); err != nil {
 		return fmt.Errorf("failed to close store: %w", err)
